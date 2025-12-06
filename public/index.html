@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Book Generator v1.3.0</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon"></div>
+      <div>
+        <div class="brand-title">AI Book Generator</div>
+        <div class="brand-sub">v1.3.0 • Guided Story Wizard</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button id="downloadDocxBtn" class="secondary">Download DOCX</button>
+      <button id="downloadMdBtn" class="secondary">Download Markdown</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <aside class="sidebar">
+      <section class="block">
+        <h2 class="block-title">Project</h2>
+        <div class="stack-xs">
+          <button id="createProjectBtn">Create New Project</button>
+          <div class="small muted">Or load an existing one:</div>
+          <select id="projectSelect"></select>
+          <button id="loadProjectBtn" class="secondary">Load Selected</button>
+        </div>
+        <div id="projectMeta" class="meta small muted m-top"></div>
+      </section>
+
+      <section class="block m-top">
+        <h2 class="block-title">Steps</h2>
+        <ol class="stepper" id="stepper">
+          <li class="step" data-step="1">
+            <button class="step-btn" id="stepBtn1">
+              <span class="step-index">1</span>
+              <div>
+                <div class="step-label">Project</div>
+                <div class="step-caption">Create / load a project</div>
+              </div>
+            </button>
+          </li>
+          <li class="step" data-step="2">
+            <button class="step-btn" id="stepBtn2">
+              <span class="step-index">2</span>
+              <div>
+                <div class="step-label">Inputs</div>
+                <div class="step-caption">Story knobs & constraints</div>
+              </div>
+            </button>
+          </li>
+          <li class="step" data-step="3">
+            <button class="step-btn" id="stepBtn3">
+              <span class="step-index">3</span>
+              <div>
+                <div class="step-label">Brief & Bible</div>
+                <div class="step-caption">High-level promise & canon</div>
+              </div>
+            </button>
+          </li>
+          <li class="step" data-step="4">
+            <button class="step-btn" id="stepBtn4">
+              <span class="step-index">4</span>
+              <div>
+                <div class="step-label">Outline</div>
+                <div class="step-caption">Chapter-by-chapter map</div>
+              </div>
+            </button>
+          </li>
+          <li class="step" data-step="5">
+            <button class="step-btn" id="stepBtn5">
+              <span class="step-index">5</span>
+              <div>
+                <div class="step-label">Chapters</div>
+                <div class="step-caption">Draft • edit • approve</div>
+              </div>
+            </button>
+          </li>
+        </ol>
+      </section>
+
+      <section class="block m-top">
+        <h2 class="block-title">Progress</h2>
+        <div class="small muted" id="progressLabel">0 of 0 chapters drafted</div>
+        <div class="progress">
+          <div class="progress-bar">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="main">
+      <!-- Step 1: Project -->
+      <section class="panel" data-step-panel="1">
+        <header class="panel-head">
+          <div>
+            <h1>Step 1: Project</h1>
+            <p class="muted small">Start by creating or loading a project. Everything else hangs off this.</p>
+          </div>
+        </header>
+        <div class="panel-body">
+          <p class="small muted">
+            Use the sidebar to create a new project or load an existing one. Once a project is active,
+            you can move on to defining Inputs.
+          </p>
+        </div>
+        <footer class="panel-foot">
+          <button id="nextFromProjectBtn" class="primary-next">Next: Inputs</button>
+        </footer>
+      </section>
+
+      <!-- Step 2: Inputs -->
+      <section class="panel hidden" data-step-panel="2">
+        <header class="panel-head">
+          <div>
+            <h1>Step 2: Inputs</h1>
+            <p class="muted small">Set genre, tone, audience, chapter counts, and your core concept.</p>
+          </div>
+        </header>
+
+        <div class="panel-body">
+          <div class="inputs-layout">
+            <form id="inputsForm" class="form-grid">
+              <label>Title
+                <input id="title" type="text" placeholder="Optional working title" />
+              </label>
+
+              <label>Genre
+                <select id="genre"></select>
+              </label>
+
+              <label>Sub-style
+                <select id="subStyle"></select>
+              </label>
+
+              <label>Tone
+                <select id="tone"></select>
+              </label>
+
+              <label>Voice / POV
+                <select id="voice"></select>
+              </label>
+
+              <label>Target Audience
+                <select id="targetAudience"></select>
+              </label>
+
+              <label>Age Range
+                <select id="ageRange"></select>
+              </label>
+
+              <label>Humour Level
+                <select id="humourLevel"></select>
+              </label>
+
+              <label>Total Chapters
+                <input id="totalChapters" type="number" min="1" max="200" value="12" />
+              </label>
+
+              <label>Target Words / Chapter
+                <input id="chapterTargetWords" type="number" min="300" max="12000" value="2000" />
+              </label>
+
+              <label>Min Words / Chapter
+                <input id="chapterMinWords" type="number" min="200" max="12000" value="1500" />
+              </label>
+
+              <label>Max Words / Chapter
+                <input id="chapterMaxWords" type="number" min="200" max="20000" value="3000" />
+              </label>
+
+              <label class="full">Core Concept
+                <textarea id="coreConcept" rows="3" placeholder="High-level plot + main arc"></textarea>
+              </label>
+
+              <label class="full">Characters (authoritative facts)
+                <textarea id="characters" rows="4" placeholder="Names, traits, appearance, relationships."></textarea>
+              </label>
+
+              <label class="full">Locations (authoritative facts)
+                <textarea id="locations" rows="4" placeholder="Towns, planets, buildings, rules, vibe."></textarea>
+              </label>
+
+              <label class="full">Additional Notes
+                <textarea id="additionalNotes" rows="3" placeholder="Themes, taboo topics, style constraints, etc."></textarea>
+              </label>
+            </form>
+
+            <section class="preview">
+              <h2 class="preview-title">Inputs Preview</h2>
+              <p class="muted small">This is what the engine will see. Make sure it looks right.</p>
+              <pre id="inputsPreview" class="mono-box"></pre>
+            </section>
+          </div>
+        </div>
+
+        <footer class="panel-foot">
+          <button id="saveInputsBtn" class="secondary">Save Inputs</button>
+          <button id="previewInputsBtn" class="secondary">Refresh Preview</button>
+          <span class="flex-spacer"></span>
+          <button id="backToProjectBtn" class="secondary">Back</button>
+          <button id="nextFromInputsBtn" class="primary-next">Next: Brief & Bible</button>
+        </footer>
+      </section>
+
+      <!-- Step 3: Brief & Bible -->
+      <section class="panel hidden" data-step-panel="3">
+        <header class="panel-head">
+          <div>
+            <h1>Step 3: Brief & Bible</h1>
+            <p class="muted small">Generate the book's promise (brief) and its canon (bible).</p>
+          </div>
+        </header>
+
+        <div class="panel-body">
+          <div class="row gap">
+            <button id="generateBriefBibleBtn">Generate Brief + Bible</button>
+            <span id="briefBibleStatus" class="muted small"></span>
+          </div>
+
+          <div class="grid-two m-top">
+            <section class="card">
+              <h2 class="card-title">Brief</h2>
+              <p class="muted small">High-level description, themes, and structural promise.</p>
+              <div id="briefDisplay" class="mono-box"></div>
+            </section>
+
+            <section class="card">
+              <h2 class="card-title">Bible</h2>
+              <p class="muted small">Canon: key characters, locations, rules of the world.</p>
+              <div id="bibleDisplay" class="mono-box"></div>
+            </section>
+          </div>
+        </div>
+
+        <footer class="panel-foot">
+          <button id="backToInputsBtn" class="secondary">Back</button>
+          <button id="nextFromBriefBtn" class="primary-next">Next: Outline</button>
+        </footer>
+      </section>
+
+      <!-- Step 4: Outline -->
+      <section class="panel hidden" data-step-panel="4">
+        <header class="panel-head">
+          <div>
+            <h1>Step 4: Outline</h1>
+            <p class="muted small">Let the AI propose a chapter-by-chapter outline.</p>
+          </div>
+        </header>
+
+        <div class="panel-body">
+          <div class="row gap">
+            <button id="generateOutlineBtn">Generate Outline</button>
+            <span id="outlineStatus" class="muted small"></span>
+          </div>
+
+          <section class="m-top">
+            <h2 class="card-title">Outline</h2>
+            <div id="outlineDisplay" class="mono-box tall"></div>
+          </section>
+        </div>
+
+        <footer class="panel-foot">
+          <button id="backToBriefBtn" class="secondary">Back</button>
+          <button id="nextFromOutlineBtn" class="primary-next">Next: Chapters</button>
+        </footer>
+      </section>
+
+      <!-- Step 5: Chapters -->
+      <section class="panel hidden" data-step-panel="5">
+        <header class="panel-head">
+          <div>
+            <h1>Step 5: Chapters</h1>
+            <p class="muted small">Draft one chapter at a time, edit, then approve. Approved text becomes canon.</p>
+          </div>
+        </header>
+
+        <div class="panel-body">
+          <div class="row gap">
+            <button id="generateFirstChapterBtn">Generate First Chapter</button>
+            <button id="generateNextChapterBtn" class="secondary hidden">Generate Next Chapter</button>
+            <span id="chaptersStatus" class="muted small"></span>
+          </div>
+
+          <div class="chapters-layout m-top">
+            <aside class="chapters-nav">
+              <div class="chapters-nav-head">
+                <span class="muted small">Chapters</span>
+              </div>
+              <ul id="chaptersList" class="chapters-list"></ul>
+            </aside>
+
+            <section class="chapters-main">
+              <div class="row gap">
+                <div id="currentChapterLabel" class="small muted">No chapter selected.</div>
+                <span class="flex-spacer"></span>
+                <button id="regenerateChapterBtn" class="secondary">Regenerate Current</button>
+                <button id="approveChapterBtn">Approve & Save</button>
+              </div>
+
+              <div class="split m-top">
+                <div>
+                  <h3 class="field-label">AI Draft</h3>
+                  <textarea id="draftText" rows="12" readonly></textarea>
+                </div>
+                <div>
+                  <h3 class="field-label">Your Edited Version</h3>
+                  <textarea id="userText" rows="12" placeholder="Edit here. This version becomes canonical when you approve."></textarea>
+                </div>
+              </div>
+
+              <section class="m-top">
+                <h3 class="field-label">Continuity Snapshot (this chapter)</h3>
+                <pre id="continuityDisplay" class="mono-box small"></pre>
+              </section>
+            </section>
+          </div>
+        </div>
+
+        <footer class="panel-foot">
+          <button id="backToOutlineBtn" class="secondary">Back</button>
+        </footer>
+      </section>
+
+      <section class="status-bar">
+        <div id="globalStatus" class="small muted">Ready.</div>
+      </section>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
