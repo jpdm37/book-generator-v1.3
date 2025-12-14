@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -22,21 +23,23 @@ import {
 } from "./lib/engine.js";
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Middleware
 app.use(express.json({ limit: "2mb" }));
 
+// Simple request logger (what you're seeing in Render logs)
 app.use((req, _res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// Serve static files (index.html, styles.css, app.js) from /public
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/api/health", (_req, res) => {
-  res.json({ ok: true });
-});
+/* ------------ API: Projects list/create/load/delete ------------ */
 
 app.get("/api/projects", async (_req, res) => {
   try {
@@ -69,9 +72,11 @@ app.get("/api/projects/:id", async (req, res) => {
   }
 });
 
+// IMPORTANT: this must return the full project, because app.js does res.json()
 app.put("/api/projects/:id/inputs", async (req, res) => {
   try {
-    const project = await updateProjectInputs(req.params.id, req.body || {});
+    await updateProjectInputs(req.params.id, req.body || {});
+    const project = await getProject(req.params.id);
     res.json(project);
   } catch (err) {
     console.error(err);
@@ -88,6 +93,8 @@ app.delete("/api/projects/:id", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+/* ------------ API: Brief & Bible / Outline / Chapters ------------ */
 
 app.post("/api/projects/:id/brief-bible", async (req, res) => {
   try {
@@ -119,10 +126,10 @@ app.post("/api/projects/:id/chapters/next", async (req, res) => {
   }
 });
 
-app.put("/api/projects/:id/chapters/:index/edits", async (req, res) => {
+app.post("/api/projects/:id/chapters/:index/regenerate", async (req, res) => {
   try {
-    const idx = Number(req.params.index);
-    const project = await saveUserEdits(req.params.id, idx, req.body || {});
+    const index = Number(req.params.index);
+    const project = await regenerateChapter(req.params.id, index);
     res.json(project);
   } catch (err) {
     console.error(err);
@@ -130,24 +137,35 @@ app.put("/api/projects/:id/chapters/:index/edits", async (req, res) => {
   }
 });
 
-app.post("/api/projects/:id/chapters/:index/regenerate", async (req, res) => {
+// Save user edits (chapter text + continuity overrides)
+app.put("/api/projects/:id/chapters/edits", async (req, res) => {
   try {
-    const idx = Number(req.params.index);
-    await clearAndRewindFromChapter(req.params.id, idx);
-    const project = await regenerateChapter(req.params.id, idx);
+    const project = await saveUserEdits(req.params.id, req.body || {});
     res.json(project);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
+
+// Clear chapters & continuity from a given index onwards
+app.post("/api/projects/:id/chapters/rewind", async (req, res) => {
+  try {
+    const idx = Number(req.body?.chapterIndex ?? req.body?.index ?? 0);
+    const project = await clearAndRewindFromChapter(req.params.id, idx);
+    res.json(project);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ------------ API: Downloads ------------ */
 
 app.get("/api/projects/:id/download/markdown", async (req, res) => {
   try {
     const md = await compileBookMarkdown(req.params.id);
-    const safeName = `book-${req.params.id}.md`;
     res.setHeader("Content-Type", "text/markdown; charset=utf-8");
-    res.setHeader("Content-Disposition", `attachment; filename="${safeName}"`);
     res.send(md);
   } catch (err) {
     console.error(err);
@@ -158,12 +176,8 @@ app.get("/api/projects/:id/download/markdown", async (req, res) => {
 app.get("/api/projects/:id/download/docx", async (req, res) => {
   try {
     const buf = await compileBookDocxBuffer(req.params.id);
-    const safeName = `book-${req.params.id}.docx`;
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    );
-    res.setHeader("Content-Disposition", `attachment; filename="${safeName}"`);
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    res.setHeader("Content-Disposition", 'attachment; filename="book.docx"');
     res.send(buf);
   } catch (err) {
     console.error(err);
@@ -171,12 +185,16 @@ app.get("/api/projects/:id/download/docx", async (req, res) => {
   }
 });
 
+/* ------------ Fallback: serve SPA ------------ */
+
 app.get("*", (req, res) => {
   if (req.url.startsWith("/api/")) {
     return res.status(404).json({ error: "Not found" });
   }
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
+
+/* ------------ Start server ------------ */
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
